@@ -1,7 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Atmel Studio Solution File, Format Version 11.00
-Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "RC_Car", "RC_Car\RC_Car.cproj", "{37AD61E4-DA12-448C-9D5A-6220868322B5}"
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "RC_Car_Receiver", "RC_Car\RC_Car_Receiver.cproj", "{37AD61E4-DA12-448C-9D5A-6220868322B5}"
+EndProject
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "RC_Car_Controller", "RC_Car_Controller\RC_Car_Controller.cproj", "{7D05FF10-72D7-42B9-AA81-7C1CD7CF04F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,6 +15,10 @@ Global
 		{37AD61E4-DA12-448C-9D5A-6220868322B5}.Debug|AVR.Build.0 = Debug|AVR
 		{37AD61E4-DA12-448C-9D5A-6220868322B5}.Release|AVR.ActiveCfg = Release|AVR
 		{37AD61E4-DA12-448C-9D5A-6220868322B5}.Release|AVR.Build.0 = Release|AVR
+		{7D05FF10-72D7-42B9-AA81-7C1CD7CF04F5}.Debug|AVR.ActiveCfg = Debug|AVR
+		{7D05FF10-72D7-42B9-AA81-7C1CD7CF04F5}.Debug|AVR.Build.0 = Debug|AVR
+		{7D05FF10-72D7-42B9-AA81-7C1CD7CF04F5}.Release|AVR.ActiveCfg = Release|AVR
+		{7D05FF10-72D7-42B9-AA81-7C1CD7CF04F5}.Release|AVR.Build.0 = Release|AVR
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
