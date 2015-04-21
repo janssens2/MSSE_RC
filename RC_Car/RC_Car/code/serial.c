@@ -5,6 +5,17 @@
  *  Author: janssens
  */ 
 
+#include <pololu/orangutan.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "../headers/serial.h"
+#include "../headers/pid.h"
+
+char myBuffer[BUFFER_SIZE];
+char my_received_buffer[BUFFER_SIZE];
+uint8_t bytes_received = 0;
+
 // receive_buffer: A ring buffer that we will use to receive bytes on USB_COMM.
 // The OrangutanSerial library will put received bytes in to
 // the buffer starting at the beginning (receiveBuffer[0]).
@@ -19,6 +30,8 @@ unsigned char receive_buffer_position = 0;
 
 // send_buffer: A buffer for sending bytes on USB_COMM.
 char send_buffer[BUFFER_SIZE];
+
+enum debug_level_t gDebugLevel = DEBUG_ERROR;
 
 void wait_for_sending_to_finish()
 {
@@ -40,13 +53,12 @@ void print_menu( )
 
 void process_received_bytes( char bytes[] )
 {
+	SPid *tmpPid;
 	char operation;
 	int32_t value = 0;
 	
 	// may need this -Wl,-u,vfscanf -lscanf_flt for float reads...
-	int tmp = sscanf( bytes, "%c %ld", &operation, &value);
-
-	serial_print( "(%d) OP:%c VA:%ld", tmp, operation, value );
+	sscanf( bytes, "%c %ld", &operation, &value);
 
 	switch(operation)
 	{
@@ -54,6 +66,33 @@ void process_received_bytes( char bytes[] )
 		case '?':
 			// print the menu again
 			print_menu();
+			break;
+		case '0':
+			gDebugLevel = DEBUG_ERROR;
+			break;		
+		case '1':
+			gDebugLevel = DEBUG_WARN;
+			break;
+		case '2':
+			gDebugLevel = DEBUG_IINFO;
+			break;
+		case '3':
+			gDebugLevel = DEBUG_INFO;
+			break;
+		case '4':
+			gDebugLevel = DEBUG_VERBOSE;
+			break;
+			
+		case 'm':
+			// modify motor 1 speed
+			getMotorPid( &tmpPid, 1 );
+			tmpPid->targetRef = value;
+			break;
+
+		case 'n':
+			// modify motor 2 speed
+			getMotorPid( &tmpPid, 2 );
+			tmpPid->targetRef = value;
 			break;
 
 		default:
@@ -152,14 +191,29 @@ void serial_print_string( const char myString[] )
 	
 }
 
+void debug_print( uint8_t dbgLvl, char *format, ... )
+{
+	if ( dbgLvl > gDebugLevel)
+	{
+		return;
+	}
+	
+	va_list args;
+	va_start( args, format );
+	
+	memset( myBuffer, 0, BUFFER_SIZE );
+	vsnprintf( myBuffer, BUFFER_SIZE, format, args );
+	
+	serial_print_string( myBuffer );
+}
+
 void serial_print( char *format, ... )
 {
 	va_list args;
 	va_start( args, format );
 	
-	char myBuffer[BUFFER_SIZE];
 	memset( myBuffer, 0, BUFFER_SIZE );
-	vsprintf( myBuffer, format, args );
+	vsnprintf( myBuffer, BUFFER_SIZE, format, args );
 	
 	serial_print_string( myBuffer );
 }

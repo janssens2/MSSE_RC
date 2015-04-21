@@ -5,8 +5,59 @@
  *  Author: janssens
  */ 
 
-SPid *myPid1;
-SPid *myPid2;
+#include <pololu/orangutan.h>
+#include <alloca.h>
+
+#include "../headers/pid.h"
+#include "../headers/motor.h"
+#include "../headers/serial.h"
+
+// some globals related to PID stuff
+SPid *gM1Pid;
+SPid *gM2Pid;
+
+void getMotorPid( SPid **pid, uint8_t motorNum )
+{
+	switch (motorNum)
+	{
+		case 1:
+			*pid = gM1Pid;
+			break;
+		case 2:
+			*pid = gM2Pid;
+			break;
+		default:
+			// error case
+			break;
+	}
+}
+
+void initPIDs( )
+{
+	gM1Pid = malloc( sizeof(SPid) );
+	gM2Pid = malloc( sizeof(SPid) );
+	setupPID( gM1Pid, MOTOR_MODE_SPEED, .0001, 2.0, 4.6, 1000.0, -1000.0, &setMyMotor1Speed );
+	debug_print(DEBUG_ERROR, "M1 fp=%p f=%p", gM1Pid->setMyMotorSpeed, &setMyMotor1Speed );
+	setupPID( gM2Pid, MOTOR_MODE_POSITION, .0001, 2.0, 4.6, 1000.0, -1000.0, &setMyMotor2Speed );
+	debug_print(DEBUG_ERROR, "M2 fp=%p f=%p", gM2Pid->setMyMotorSpeed, &setMyMotor2Speed );
+}
+
+void setupPID( SPid *pid, enum motor_mode_t myMode, double iGain, double pGain, double dGain, double iMax, double iMin, int16_t (*setMyMotorSpeedFunc)( int16_t ) )
+{
+	pid->myMode = myMode;
+	pid->iGain  = iGain;
+	pid->pGain  = pGain;
+	pid->dGain  = dGain;
+	pid->iMax   = iMax;
+	pid->iMin   = iMin;
+	pid->setMyMotorSpeed = setMyMotorSpeedFunc;
+	
+	pid->targetRef = 0;
+	pid->currentRef = 0;
+	pid->currentTorque = 0;
+	pid->iState = 0;
+	pid->dState = 0;
+}
 
 int16_t updatePID( SPid *pid, int32_t error, int32_t position )
 {
@@ -14,10 +65,7 @@ int16_t updatePID( SPid *pid, int32_t error, int32_t position )
 	double dTerm = 0.0;
 	double iTerm = 0.0;
 	
-	if ( toDebug > 2 )
-	{
-		serial_print( "args err=%.1f position=%.1f iState=%.1f dState=%.1f", error, position, pid->iState, pid->dState );
-	}
+	debug_print( DEBUG_VERBOSE, "args err=%.1f position=%.1f iState=%.1f dState=%.1f", error, position, pid->iState, pid->dState );
 	
 	pTerm = pid->pGain * error; // calculate proportional term
 
@@ -39,10 +87,7 @@ int16_t updatePID( SPid *pid, int32_t error, int32_t position )
 	//}
 	pid->dState = position;
 	
-	if ( toDebug > 2 )
-	{
-		serial_print( "p=%.1f d=%.1f i=%.1f", pTerm, dTerm, iTerm);
-	}
+	debug_print( DEBUG_VERBOSE, "p=%.1f d=%.1f i=%.1f", pTerm, dTerm, iTerm);
 	
 	return (int16_t) (pTerm + dTerm + iTerm);
 }
