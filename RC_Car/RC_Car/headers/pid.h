@@ -31,13 +31,16 @@ typedef struct
 	int16_t targetRef;
 	int16_t currentRef;
 	int16_t currentTorque;
+	int32_t currentVelocity;
+	uint8_t myMotorId;
 	
 	int16_t (*setMyMotorSpeed)( int16_t );
 } SPid;
 
 void initPIDs( );
-void setupPID( SPid *pid, enum motor_mode_t myMode, double iGain, double pGain, double dGain, double iMax, double iMin, int16_t (*setMyMotorSpeedFunc)(int16_t) );
+void setupPID( SPid *pid, enum motor_mode_t myMode, uint8_t motorId, double iGain, double pGain, double dGain, double iMax, double iMin, int16_t (*setMyMotorSpeedFunc)(int16_t) );
 int16_t updatePID( SPid *pid, int32_t error, int32_t position );
 void getMotorPid( SPid **pid, uint8_t motorNum );
+void updateVelocity( );
 
 #endif /* PID_H_ */

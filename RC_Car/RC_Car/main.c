@@ -18,6 +18,7 @@
 
 void release_pid_task();
 void print_lcd_task();
+void pid_worker( SPid *myPid );
 
 volatile bool g_release_pid_task = false;
 
@@ -54,15 +55,54 @@ int main()
 		{
 			g_release_pid_task = false;
 			// do pid things here...
-			m1->currentTorque = m1->setMyMotorSpeed( m1->targetRef );
-			m2->currentTorque = m2->setMyMotorSpeed( m2->targetRef );
+			//m1->currentTorque = m1->setMyMotorSpeed( m1->targetRef );
+			//m2->currentTorque = m2->setMyMotorSpeed( m2->targetRef );
+			pid_worker( m1 );
+			pid_worker( m2 );
 		}
 	}
+}
+
+void pid_worker( SPid *myPid )
+{
+	int32_t myError;
+	if ( myPid->myMode == MOTOR_MODE_SPEED )
+	{
+		myPid->currentRef = myPid->currentVelocity;
+	}
+	else if ( myPid->myMode == MOTOR_MODE_POSITION )
+	{
+		myPid->currentRef = getMotorEncoderCounts( myPid->myMotorId );
+	}
+	else
+	{
+		// whoops... really bad stuff happening here
+		debug_print(DEBUG_ERROR, "pid_worker, should not be here");
+	}
+	
+	myError = myPid->targetRef - myPid->currentRef;
+	int16_t myNewSpeed = updatePID( myPid, myError, myPid->currentRef );
+	myNewSpeed = ( myPid->myMode == MOTOR_MODE_SPEED ) ? myNewSpeed + myPid->currentTorque : myNewSpeed;
+	myPid->currentTorque = myPid->setMyMotorSpeed( myNewSpeed );
+	
+	debug_print(DEBUG_INFO, "(%d) Pm=%.5ld T=%.3d Pr=%.5ld Kp=%.3f Ki=%.5f Kd=%.3f", myPid->myMotorId,
+																				 myPid->currentRef % 100000,
+																				 myPid->currentTorque % 1000,
+																				 myPid->targetRef % 100000,
+																				 myPid->pGain,
+																				 myPid->iGain,
+																				 myPid->dGain);
+	debug_print(DEBUG_INFO, "(%d) New=%.3d encoder=%.9ld err=%.5ld spd=%.5ld", myPid->myMotorId, 
+																		   myNewSpeed % 1000,
+																		   getMotorEncoderCounts( myPid->myMotorId ) % 1000000000,
+																		   myError,
+																		   myPid->currentVelocity % 100000 );
 }
 
 void release_pid_task()
 {
 	g_release_pid_task = true;
+	updateVelocity();
 }
 
 void print_lcd_task()

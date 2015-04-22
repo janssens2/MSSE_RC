@@ -14,6 +14,12 @@
 // some global vars to keep track of the motor stuff
 volatile int32_t gM1EncoderCounts	= 0;
 volatile int32_t gM2EncoderCounts	= 0;
+volatile int32_t gM1PrvEncoderCounts= 0;
+volatile int32_t gM2PrvEncoderCounts= 0;
+volatile int32_t gM1Speed[SPEED_COUNT_SIZE] = {0};
+volatile int32_t gM2Speed[SPEED_COUNT_SIZE] = {0};
+volatile uint8_t gM1SpeedIdx        = 0;
+volatile uint8_t gM2SpeedIdx        = 0;
 volatile unsigned char gLastM1A_val = 0;
 volatile unsigned char gLastM1B_val = 0;
 volatile unsigned char gLastM2A_val = 0;
@@ -197,6 +203,52 @@ int16_t setMyMotor2Speed( int16_t speed )
 	return currentTorque;
 }
 
+int32_t getMyMotor1Velocity( )
+{
+	int32_t tmpEncoderCounts = gM1EncoderCounts;
+	if ( gM1SpeedIdx >= SPEED_COUNT_SIZE )
+	{
+		gM1SpeedIdx = 0;
+	}
+	gM1Speed[gM1SpeedIdx] = (tmpEncoderCounts - gM1PrvEncoderCounts);
+	
+	gM1SpeedIdx++;
+	
+	gM1PrvEncoderCounts = tmpEncoderCounts;
+	
+	double tmpAverageSpeed = 0.0;
+	for ( uint8_t idx=0; idx < SPEED_COUNT_SIZE; idx++ )
+	{
+		tmpAverageSpeed += gM1Speed[idx];
+	}
+	tmpAverageSpeed = (tmpAverageSpeed / SPEED_COUNT_SIZE) * 100;
+	
+	return (int32_t) tmpAverageSpeed;
+}
+
+int32_t getMyMotor2Velocity( )
+{
+	int32_t tmpEncoderCounts = gM2EncoderCounts;
+	if ( gM2SpeedIdx >= SPEED_COUNT_SIZE )
+	{
+		gM2SpeedIdx = 0;
+	}
+	gM2Speed[gM2SpeedIdx] = (tmpEncoderCounts - gM2PrvEncoderCounts);
+	
+	gM2SpeedIdx++;
+	
+	gM2PrvEncoderCounts = tmpEncoderCounts;
+	
+	double tmpAverageSpeed = 0.0;
+	for ( uint8_t idx=0; idx < SPEED_COUNT_SIZE; idx++ )
+	{
+		tmpAverageSpeed += gM2Speed[idx];
+	}
+	tmpAverageSpeed = (tmpAverageSpeed / SPEED_COUNT_SIZE) * 100;
+	
+	return (int32_t) tmpAverageSpeed;
+}
+
 ISR(PCINT0_vect)
 {
 	// ISR method to calculate the number of encoder counts based
@@ -212,15 +264,16 @@ ISR(PCINT0_vect)
 
 	// determine if we need to plus or minus based on current value
 	// and the last value of the other encoder
-	unsigned char plus_m1 = m1a_val ^ gLastM1B_val;
-	unsigned char minus_m1 = m1b_val ^ gLastM1A_val;
+	unsigned char plus_m1 = m1b_val ^ gLastM1A_val;
+	unsigned char minus_m1 = m1a_val ^ gLastM1B_val;
 	
-	unsigned char plus_m2 = m2a_val ^ gLastM2B_val;
-	unsigned char minus_m2 = m2b_val ^ gLastM2A_val;
+	unsigned char plus_m2 = m2b_val ^ gLastM2A_val;
+	unsigned char minus_m2 = m2a_val ^ gLastM2B_val;
 	
 	if ( plus_m1 )
 	{
 		gM1EncoderCounts += 1;
+		
 	}
 	if ( minus_m1 )
 	{
