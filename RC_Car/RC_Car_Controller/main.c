@@ -13,17 +13,23 @@
 
 #include "headers/motion_control.h"
 #include "headers/timers.h"
+#include "headers/serial.h"
 
 void print_motion_control_info();
 void release_print_task();
 
 volatile bool g_release_print_task = false;
 
+serialCommand *g_serialCommand;
+
 int main()
 {
 	clear();
 	lcd_init_printf();
-
+	
+	
+	init_serial_tx(&g_serialCommand);
+	
 	timer_three_set_to_one_hundred_milliseconds(&release_print_task);
 
 	while(true)
@@ -60,5 +66,11 @@ void print_motion_control_info()
 	//printf("X:%+4d Y:%+4d", motion_control_get_x_input_as_percentage(), motion_control_get_y_input_as_percentage());
 	printf("X:%+4d Y:%+4d", motion_control_get_x_input(), motion_control_get_y_input());
 
-	set_m1_speed((motion_control_get_y_input_as_percentage() * 0xFF) / 100);
+	//set_m1_speed((motion_control_get_y_input_as_percentage() * 0xFF) / 100);
+	
+	/****************/
+	g_serialCommand->x = motion_control_get_x_input();
+	g_serialCommand->y = motion_control_get_y_input();
+	serial_send_command(g_serialCommand);
+	/****************/
 }

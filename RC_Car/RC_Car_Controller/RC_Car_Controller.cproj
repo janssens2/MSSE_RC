@@ -136,6 +136,9 @@
     <Compile Include="code\nintendo_nunchuk.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="code\serial.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="code\timers.c">
       <SubType>compile</SubType>
     </Compile>
@@ -146,6 +149,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="headers\nintendo_nunchuk.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="headers\serial.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="headers\timers.h">
