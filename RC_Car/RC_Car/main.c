@@ -14,6 +14,7 @@
 #include "headers/timers.h"
 #include "headers/motor.h"
 #include "headers/pid.h"
+#include "headers/serial_USB.h"
 #include "headers/serial.h"
 
 void release_pid_task();

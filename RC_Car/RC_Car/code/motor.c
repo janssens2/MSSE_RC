@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 #include "../headers/motor.h"
-#include "../headers/serial.h"
+#include "../headers/serial_USB.h"
 
 // some global vars to keep track of the motor stuff
 volatile int32_t gM1EncoderCounts	= 0;

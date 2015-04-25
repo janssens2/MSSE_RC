@@ -1,34 +1,42 @@
 /*
  * serial.h
  *
- * Created: 4/16/2015 9:56:08 PM
- *  Author: janssens
+ * Created: 4/23/2015 8:20:25 PM
+ *  Author: Jesse
  */ 
 
 
 #ifndef SERIAL_H_
 #define SERIAL_H_
 
-#define BUFFER_SIZE 81
-#define SERIAL_SEND_TIMEOUT 100
+#define SERIAL_START_CHAR 'S'
+#define SERIAL_END_CHAR 'E'
+#define SERIAL_DELIMITER_CHAR ' '
 
-enum debug_level_t {
-	DEBUG_ERROR   = 0,
-	DEBUG_WARN    = 1,
-	DEBUG_IINFO   = 2,
-	DEBUG_INFO	  = 3,
-	DEBUG_VERBOSE = 4
-};
+#define SERIAL_BAUD_RATE 38400
 
-void wait_for_sending_to_finish();
-void print_menu( );
-void process_received_bytes( char bytes[] );
-void strip( char bytes[], size_t mySize );
-void check_for_new_bytes_received( );
-void serial_print_string( const char myString[] );
-void serial_print( char *format, ... );
-void debug_print( uint8_t dbgLvl, char *format, ... );
-void serial_print_char( const char myChar );
-void serial_init( );
+typedef struct {
+	char start_char;
+	char delim_0;
+	char x_val[5];
+	char delim_1;
+	char y_val[5];
+	char delim_2;
+	char end_char;
+	char newline;
+	char linefeed;
+} serialMessage;
+
+typedef struct {
+	int16_t x;
+	int16_t y;
+} serialCommand;
+
+void init_serial_tx(serialCommand **cmd);
+
+void commandToSerialMessage(serialCommand *cmd, serialMessage *sm);
+
+void serial_send_command(serialCommand *cmd);
+
 
 #endif /* SERIAL_H_ */

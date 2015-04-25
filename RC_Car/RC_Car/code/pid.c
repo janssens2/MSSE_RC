@@ -10,7 +10,7 @@
 
 #include "../headers/pid.h"
 #include "../headers/motor.h"
-#include "../headers/serial.h"
+#include "../headers/serial_USB.h"
 
 // some globals related to PID stuff
 SPid *gM1Pid;
