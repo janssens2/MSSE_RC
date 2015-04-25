@@ -6,8 +6,8 @@
  */ 
 
 
-#ifndef SERIAL_H_
-#define SERIAL_H_
+#ifndef SERIAL_USB_H_
+#define SERIAL_USB_H_
 
 #define BUFFER_SIZE 81
 #define SERIAL_SEND_TIMEOUT 100
@@ -31,4 +31,4 @@ void debug_print( uint8_t dbgLvl, char *format, ... );
 void serial_print_char( const char myChar );
 void serial_init( );
 
-#endif /* SERIAL_H_ */
+#endif /* SERIAL_USB_H_ */

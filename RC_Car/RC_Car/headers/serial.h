@@ -40,5 +40,7 @@ void serial_send_command(serialCommand *cmd);
 
 void serial_receive_bytes( );
 
+void serial_receive_command( char commandBuffer[] );
+
 
 #endif /* SERIAL_H_ */

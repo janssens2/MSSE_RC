@@ -19,8 +19,8 @@ serialCommand *g_serialCommand;
 
 char serial_receive_buffer[80];
 char serial_my_receive_buffer[80];
-unsigned char serial_receive_buffer_position = 0;
-unsigned char serial_my_receive_buffer_postition = 0;
+uint8_t serial_receive_buffer_position = 0;
+uint8_t serial_my_receive_buffer_position = 0;
 
 void init_serial_rx(serialCommand **cmd) {
 	serial_set_baud_rate(UART0, SERIAL_BAUD_RATE);
@@ -47,27 +47,27 @@ void serial_receive_bytes( )
 {
 	while( serial_get_received_bytes(UART0) != serial_receive_buffer_position )
 	{
-		serial_my_received_buffer[serial_my_receive_buffer_position] = serial_receive_buffer[serial_receive_buffer_position];
+		serial_my_receive_buffer[serial_my_receive_buffer_position] = serial_receive_buffer[serial_receive_buffer_position];
 		serial_my_receive_buffer_position++;
 		
-		if ( serial_my_receive_buffer_position && (serial_my_received_buffer[serial_my_receive_buffer_position-1] == '\r' || serial_my_received_buffer[serial_my_receive_buffer_position-1] == '\n') )
+		if ( serial_my_receive_buffer_position && (serial_my_receive_buffer[serial_my_receive_buffer_position-1] == '\r' || serial_my_receive_buffer[serial_my_receive_buffer_position-1] == '\n') )
 		{
 			debug_print( DEBUG_IINFO, "received buffer size(%d)", serial_my_receive_buffer_position );
 			debug_print( DEBUG_IINFO, "%s", serial_my_receive_buffer );
 			
-			serial_receive_command( serial_my_received_buffer );
+			serial_receive_command( serial_my_receive_buffer );
 			
-			memset( serial_my_received_buffer, 0, sizeof( serial_my_received_buffer ) );
-			serial_my_receive_buffer_postition = 0;
+			memset( serial_my_receive_buffer, 0, sizeof( serial_my_receive_buffer ) );
+			serial_my_receive_buffer_position = 0;
 		}
 		
-		if (receive_buffer_position == sizeof(receive_buffer)-1)
+		if (serial_receive_buffer_position == sizeof(serial_receive_buffer)-1)
 		{
-			receive_buffer_position = 0;
+			serial_receive_buffer_position = 0;
 		}
 		else
 		{
-			receive_buffer_position++;
+			serial_receive_buffer_position++;
 		}
 	}
 }
@@ -75,8 +75,8 @@ void serial_receive_bytes( )
 void serial_receive_command( char commandBuffer[] )
 {
 	serialCommand myCmd;
-	
-	sscanf( commandBuffer, "S %d %d E", myCmd.x, myCmd.y );
+		
+	sscanf( commandBuffer, "S %d %d E", &myCmd.x, &myCmd.y );
 
 	memcpy( g_serialCommand, &myCmd, sizeof(serialCommand) );
 }
