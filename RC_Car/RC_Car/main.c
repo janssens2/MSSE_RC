@@ -23,11 +23,14 @@ void pid_worker( SPid *myPid );
 
 volatile bool g_release_pid_task = false;
 
+serialCommand *g_jesse_command;
+
 int main()
 {
 	clear();
 	lcd_init_printf();
 	serial_init();
+	init_serial_rx( &g_jesse_command );
 	
 	timer_one_set_to_ten_milliseconds( &release_pid_task );
 	timer_two_set_to_fast_pwm( NULL, NULL );
@@ -51,6 +54,7 @@ int main()
 	{
 		serial_check();
 		check_for_new_bytes_received();
+		serial_receive_bytes();
 
 		if (g_release_pid_task)
 		{

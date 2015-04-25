@@ -32,11 +32,13 @@ typedef struct {
 	int16_t y;
 } serialCommand;
 
-void init_serial_tx(serialCommand **cmd);
+void init_serial_rx(serialCommand **cmd);
 
 void commandToSerialMessage(serialCommand *cmd, serialMessage *sm);
 
 void serial_send_command(serialCommand *cmd);
+
+void serial_receive_bytes( );
 
 
 #endif /* SERIAL_H_ */
