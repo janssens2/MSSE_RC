@@ -16,6 +16,11 @@ const char la_cucaracha_long[] PROGMEM = "! T280 L4 V12 MS G8 G8 G8 >C4 >E8 G8 G
 
 void horn_honk(uint8_t version)
 {
+	if (is_playing())
+	{
+		return;
+	}
+
 	// La Cucaracha!!!
 	if (version == HORN_VERSION_SHORT)
 	{
