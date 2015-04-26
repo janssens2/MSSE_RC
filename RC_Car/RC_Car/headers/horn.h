@@ -8,6 +8,11 @@
 #ifndef HORN_H_
 #define HORN_H_
 
-void horn_honk();
+#include <stdint.h>
+
+#define HORN_VERSION_SHORT 0x00
+#define HORN_VERSION_LONG 0x01
+
+void horn_honk(uint8_t version);
 
 #endif /* HORN_H_ */
