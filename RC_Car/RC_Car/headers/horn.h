@@ -12,6 +12,7 @@
 
 #define HORN_VERSION_SHORT 0x00
 #define HORN_VERSION_LONG 0x01
+#define HORN_VERSION_FULL 0x02
 
 void horn_honk(uint8_t version);
 
