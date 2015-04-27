@@ -22,14 +22,18 @@ char serial_my_receive_buffer[80];
 uint8_t serial_receive_buffer_position = 0;
 uint8_t serial_my_receive_buffer_position = 0;
 
-void init_serial_rx(serialCommand **cmd) {
+void init_serial_rx( ) {
 	serial_set_baud_rate(UART0, SERIAL_BAUD_RATE);
 	serial_set_mode(UART0, SERIAL_CHECK);
 	serial_receive_ring(UART0, serial_receive_buffer, sizeof(serial_receive_buffer));
 	
-	*cmd = malloc(sizeof(serialCommand));
+	g_serialCommand = malloc(sizeof(serialCommand));
 	g_serialMessage = (serialMessage *)malloc(sizeof(serialMessage));
-	g_serialCommand = (serialCommand *)malloc( sizeof(serialCommand) );
+}
+
+void getSerialCommand( serialCommand **ptr )
+{
+	*ptr = g_serialCommand;
 }
 
 void serial_send_command(serialCommand *cmd) {
@@ -50,10 +54,10 @@ void serial_receive_bytes( )
 		serial_my_receive_buffer[serial_my_receive_buffer_position] = serial_receive_buffer[serial_receive_buffer_position];
 		serial_my_receive_buffer_position++;
 		
-		if ( serial_my_receive_buffer_position && (serial_my_receive_buffer[serial_my_receive_buffer_position-1] == '\r' || serial_my_receive_buffer[serial_my_receive_buffer_position-1] == '\n') )
+		if ( serial_my_receive_buffer_position && (serial_my_receive_buffer[serial_my_receive_buffer_position-1] == '\n' || serial_my_receive_buffer[serial_my_receive_buffer_position] == '\r') )
 		{
 			debug_print( DEBUG_IINFO, "received buffer size(%d)", serial_my_receive_buffer_position );
-			debug_print( DEBUG_IINFO, "%s", serial_my_receive_buffer );
+			debug_print( DEBUG_IINFO, "data: '%s'", serial_my_receive_buffer );
 			
 			serial_receive_command( serial_my_receive_buffer );
 			
@@ -74,9 +78,12 @@ void serial_receive_bytes( )
 
 void serial_receive_command( char commandBuffer[] )
 {
-	serialCommand myCmd;
+	//serialCommand myCmd;
 		
-	sscanf( commandBuffer, "S %d %d E", &myCmd.x, &myCmd.y );
+	//sscanf( commandBuffer, "S %d %d E", &myCmd.x, &myCmd.y );
+	sscanf( commandBuffer, "S %d %d E", &g_serialCommand->x, &g_serialCommand->y );
 
-	memcpy( g_serialCommand, &myCmd, sizeof(serialCommand) );
+	//memcpy( g_serialCommand, &myCmd, sizeof(serialCommand) );
+	
+	debug_print( DEBUG_IINFO, "serial received: x:%d y:%d", g_serialCommand->x, g_serialCommand->y );
 }

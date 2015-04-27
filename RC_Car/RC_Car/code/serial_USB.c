@@ -11,6 +11,7 @@
 
 #include "../headers/serial_USB.h"
 #include "../headers/pid.h"
+#include "../headers/horn.h"
 
 char myBuffer[BUFFER_SIZE];
 char my_received_buffer[BUFFER_SIZE];
@@ -93,6 +94,25 @@ void process_received_bytes( char bytes[] )
 			// modify motor 2 speed
 			getMotorPid( &tmpPid, 2 );
 			tmpPid->targetRef = value;
+			break;
+			
+		case 'h':
+			// use the horn
+			switch( value )
+			{
+				case 1:
+					horn_honk( HORN_VERSION_FULL );
+					break;
+				case 2:
+					horn_honk( HORN_VERSION_LONG );
+					break;
+				case 3:
+					horn_honk( HORN_VERSION_SHORT );
+					break;
+				default:
+					
+					break;
+			}
 			break;
 
 		default:

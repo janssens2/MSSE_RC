@@ -23,14 +23,12 @@ void pid_worker( SPid *myPid );
 
 volatile bool g_release_pid_task = false;
 
-serialCommand *g_jesse_command;
-
 int main()
 {
 	clear();
 	lcd_init_printf();
 	serial_init();
-	init_serial_rx( &g_jesse_command );
+	init_serial_rx();
 	
 	timer_one_set_to_ten_milliseconds( &release_pid_task );
 	timer_two_set_to_fast_pwm( NULL, NULL );
@@ -50,6 +48,9 @@ int main()
 	getMotorPid( &m2, 2 );
 	debug_print(DEBUG_VERBOSE, "M2-%d(%d) %p(%p)", m2->currentTorque, m2->targetRef, m2->setMyMotorSpeed, &setMyMotor2Speed);
 	
+	serialCommand *jesse_command;
+	getSerialCommand( &jesse_command );
+	
 	while(true)
 	{
 		serial_check();
@@ -62,6 +63,19 @@ int main()
 			// do pid things here...
 			//m1->currentTorque = m1->setMyMotorSpeed( m1->targetRef );
 			//m2->currentTorque = m2->setMyMotorSpeed( m2->targetRef );
+			
+			// y is speed (m1)  -100 .. 100
+			// x is direction (m2) -100 .. 100
+			int16_t m2ref = 0;
+			int16_t m1ref = 0;
+			if ( abs(jesse_command->x) > 4 )
+				m2ref = (((double) jesse_command->x/100) * 1500);
+			if ( abs(jesse_command->y) > 4 )
+				m1ref = (((double) jesse_command->y/100) * 10000);
+			debug_print( DEBUG_IINFO, "command received: x: %d(%d), y:%d(%d)", jesse_command->x, m2ref, jesse_command->y, m1ref );
+			m1->targetRef = m1ref;
+			m2->targetRef = m2ref;
+			
 			pid_worker( m1 );
 			pid_worker( m2 );
 		}
