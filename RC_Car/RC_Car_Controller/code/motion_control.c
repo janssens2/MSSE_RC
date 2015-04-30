@@ -29,12 +29,12 @@ void motion_control_refresh_data();
 
 void motion_control_initialize()
 {
+	g_is_motion_control_initialized = true;
+
 	motion_control_refresh_data();
 	motion_control_home_inputs();
 
 	timer_one_set_to_ten_milliseconds(&motion_control_refresh_data);
-
-	g_is_motion_control_initialized = true;
 }
 
 void motion_control_home_inputs()
