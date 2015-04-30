@@ -38,7 +38,7 @@ void initPIDs( )
 	gM2Pid = malloc( sizeof(SPid) );
 	setupPID( gM1Pid, MOTOR_MODE_SPEED, 1, 0.0001, 0.001, 0.01, 1000.0, -1000.0, &setMyMotor1Speed );
 	debug_print(DEBUG_ERROR, "M1 fp=%p f=%p", gM1Pid->setMyMotorSpeed, &setMyMotor1Speed );
-	setupPID( gM2Pid, MOTOR_MODE_POSITION, 2, 0.0001, 0.2, 0.1, 1000.0, -1000.0, &setMyMotor2Speed );
+	setupPID( gM2Pid, MOTOR_MODE_POSITION, 2, 0.0001, 0.125, 0.1, 1000.0, -1000.0, &setMyMotor2Speed );
 	debug_print(DEBUG_ERROR, "M2 fp=%p f=%p", gM2Pid->setMyMotorSpeed, &setMyMotor2Speed );
 }
 
@@ -59,6 +59,10 @@ void setupPID( SPid *pid, enum motor_mode_t myMode, uint8_t motorId, double iGai
 	pid->iState = 0;
 	pid->dState = 0;
 	pid->currentVelocity = 0;
+	pid->maxLeft = CENTER_UNSET;
+	pid->maxRight = CENTER_UNSET;
+	pid->isCenterSet = 0;
+	pid->centerRef = CENTER_UNSET;
 }
 
 int16_t updatePID( SPid *pid, int32_t error, int32_t position )
@@ -67,7 +71,7 @@ int16_t updatePID( SPid *pid, int32_t error, int32_t position )
 	double dTerm = 0.0;
 	double iTerm = 0.0;
 	
-	debug_print( DEBUG_VERBOSE, "args err=%.1f position=%.1f iState=%.1f dState=%.1f", error, position, pid->iState, pid->dState );
+	debug_print( DEBUG_VERBOSE, "args err=%ld position=%ld iState=%.1f dState=%.1f", error, position, pid->iState, pid->dState );
 	
 	pTerm = pid->pGain * error; // calculate proportional term
 
@@ -98,4 +102,46 @@ void updateVelocity( )
 {
 	gM1Pid->currentVelocity = getMyMotor1Velocity();
 	gM2Pid->currentVelocity = getMyMotor2Velocity();
+}
+
+uint8_t setPIDCenter( SPid *pid )
+{
+	if ( pid->isCenterSet )
+	{
+		return 0;
+	}
+
+	if ( pid->maxLeft == CENTER_UNSET || pid->maxRight == CENTER_UNSET )
+	{
+		//debug_print( DEBUG_ERROR, "You have not yet set center, not going to try to turn" );
+		return 1;
+	}
+
+	int16_t center = (abs(pid->maxLeft) + abs(pid->maxRight)) / 2;
+
+	pid->centerRef = center + pid->maxLeft;
+	pid->isCenterSet = 1;
+
+	return 0;
+}
+
+void setWheelDirection( SPid *pid, double tgtPercent )
+{
+	uint8_t rc = setPIDCenter( pid );
+	if ( rc ) return;
+	
+	// left
+	if ( tgtPercent < 0.0 )
+	{
+		pid->targetRef = (int16_t) ((abs(pid->maxLeft) + (pid->centerRef)) * tgtPercent);
+	}
+	// right
+	else if ( tgtPercent > 0.0 )
+	{
+		pid->targetRef = (int16_t) (((pid->maxRight) + abs(pid->centerRef)) * tgtPercent);
+	}
+	else
+	{
+		pid->targetRef = (int16_t) (pid->centerRef);
+	}
 }

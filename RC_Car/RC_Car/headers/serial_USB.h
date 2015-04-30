@@ -20,6 +20,7 @@ enum debug_level_t {
 	DEBUG_VERBOSE = 4
 };
 
+void set_debug_level( enum debug_level_t myLevel );
 void wait_for_sending_to_finish();
 void print_menu( );
 void process_received_bytes( char bytes[] );

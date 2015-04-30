@@ -34,6 +34,11 @@ char send_buffer[BUFFER_SIZE];
 
 enum debug_level_t gDebugLevel = DEBUG_ERROR;
 
+void set_debug_level( enum debug_level_t myLevel )
+{
+	gDebugLevel = myLevel;
+}
+
 void wait_for_sending_to_finish()
 {
 	int32_t timeout = SERIAL_SEND_TIMEOUT;

@@ -30,19 +30,16 @@ typedef struct {
 typedef struct {
 	int16_t x;
 	int16_t y;
+	int16_t c;
+	int16_t z;
 } serialCommand;
 
 void init_serial_rx( );
 
-void getSerialCommand( serialCommand **ptr );
-
-void commandToSerialMessage(serialCommand *cmd, serialMessage *sm);
-
-void serial_send_command(serialCommand *cmd);
-
 void serial_receive_bytes( );
 
-void serial_receive_command( char commandBuffer[] );
+void serial_receive_command( );
 
+void getSerialCommand( serialCommand **ptr );
 
 #endif /* SERIAL_H_ */

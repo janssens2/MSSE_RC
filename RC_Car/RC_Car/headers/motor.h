@@ -9,7 +9,7 @@
 #ifndef MOTOR_H_
 #define MOTOR_H_
 
-#define SPEED_COUNT_SIZE 1
+#define SPEED_COUNT_SIZE 5
 
 void setupMotor2( );
 void setupMotor1( );
