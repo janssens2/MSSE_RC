@@ -32,12 +32,16 @@ void commandToSerialMessage(serialCommand *cmd, serialMessage *sm) {
 	sm->delim_0 = SERIAL_DELIMITER_CHAR;
 	sm->delim_1 = SERIAL_DELIMITER_CHAR;
 	sm->delim_2 = SERIAL_DELIMITER_CHAR;
+	sm->delim_3 = SERIAL_DELIMITER_CHAR;
+	sm->delim_4 = SERIAL_DELIMITER_CHAR;
 	
 	sm->newline = '\n';
 	sm->linefeed = '\r';
 	
 	sprintf(sm->x_val, "%+4d", cmd->x);
 	sprintf(sm->y_val, "%+4d", cmd->y);
+	sprintf(sm->c_val, "%+1d", cmd->c);
+	sprintf(sm->z_val, "%+1d", cmd->z);
 	
 	sm->end_char = SERIAL_END_CHAR;
 }

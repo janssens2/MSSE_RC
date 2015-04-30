@@ -22,6 +22,10 @@ typedef struct {
 	char delim_1;
 	char y_val[5];
 	char delim_2;
+	char c_val[1];
+	char delim_3;
+	char z_val[1];
+	char delim_4;
 	char end_char;
 	char newline;
 	char linefeed;
@@ -30,6 +34,8 @@ typedef struct {
 typedef struct {
 	int16_t x;
 	int16_t y;
+	int16_t c;
+	int16_t z;
 } serialCommand;
 
 void init_serial_tx(serialCommand **cmd);

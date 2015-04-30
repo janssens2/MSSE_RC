@@ -33,7 +33,7 @@ volatile uint16_t g_release_centering_task = false;
 
 int main()
 {
-	uint16_t cButton = 0;
+	//uint16_t cButton = 0;
 	
 	clear();
 	lcd_init_printf();

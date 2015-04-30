@@ -12,6 +12,7 @@
 #include <pololu/orangutan.h>
 
 #include "headers/motion_control.h"
+#include "headers/nintendo_nunchuk.h"
 #include "headers/timers.h"
 #include "headers/serial.h"
 
@@ -71,6 +72,8 @@ void print_motion_control_info()
 	/****************/
 	g_serialCommand->x = motion_control_get_x_input();
 	g_serialCommand->y = motion_control_get_y_input();
+	g_serialCommand->c = nunchuck_get_button_c();
+	g_serialCommand->z = nunchuck_get_button_z();
 	serial_send_command(g_serialCommand);
 	/****************/
 }
