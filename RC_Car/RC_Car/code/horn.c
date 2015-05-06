@@ -8,6 +8,7 @@
 #include <stdint.h>
 
 #include "../headers/horn.h"
+#include "../headers/serial_USB.h"
 
 #include <pololu/orangutan.h>
 
@@ -19,6 +20,7 @@ void horn_honk(uint8_t version)
 {
 	if (is_playing())
 	{
+		debug_print( DEBUG_IINFO, "Horn already playing, don't interrupt the magic!" );
 		return;
 	}
 

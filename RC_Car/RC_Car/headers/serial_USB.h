@@ -9,6 +9,8 @@
 #ifndef SERIAL_USB_H_
 #define SERIAL_USB_H_
 
+#include <stdlib.h>
+
 #define BUFFER_SIZE 81
 #define SERIAL_SEND_TIMEOUT 100
 

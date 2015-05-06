@@ -23,24 +23,32 @@
 #define PID_FREQUENCY_MULTIPLIER 2 // multiplier of timer firings to release the PID task
 #define NUNCHUCK_ZERO_GOOD 4
 #define C_BUTTON_PRESS_CENTER 500 // set to 50 which is 50 * 10ms or 500ms wait to take action, take into account PID_FREQUENCY_MULTIPLIER too
+#define IDEAL_BATTERY_MV 9000
 
 void release_pid_task();
 void print_lcd_task();
+void print_lcd_task_worker();
 void pid_worker( SPid *myPid );
-void center_task( SPid *pid, SCenter *center );
+void center_task( SPid *pid, SCenter *center, int16_t batteryModifier );
 
 volatile bool g_release_pid_task = false;
+volatile bool g_release_lcd_task = false;
 volatile uint32_t g_release_pid_task_counter = 0;
-volatile uint16_t g_release_centering_task = false;
+volatile uint16_t g_release_centering_task = 0;
+volatile uint16_t g_battery_mV = 0;
 
 int main()
 {
 	uint16_t cButton = 0;
+	int16_t batteryModifier = 0;
 	
 	clear();
 	lcd_init_printf();
 	serial_init();
 	init_serial_rx();
+	
+	// enable debug?  uncomment me...  just know ITS NOISY
+	//set_debug_level( DEBUG_VERBOSE );
 	
 	// DO NOT initialize TIMER1
 	// TIMER1 is used for the horn and will override any setting you set
@@ -77,22 +85,36 @@ int main()
 		check_for_new_bytes_received();
 		serial_receive_bytes();
 
+		if ( g_release_lcd_task )
+		{
+			g_release_lcd_task = false;
+			print_lcd_task_worker();
+		}
+
 		if (g_release_pid_task)
 		{
 			g_release_pid_task = false;
 			if ( jesse_command->c == 1 && g_release_centering_task < C_BUTTON_PRESS_CENTER ) // maybe only do this if held for 100ms? 10 times?
 			{
+				if ( g_release_centering_task == 0 )
+				{
+					debug_print( DEBUG_IINFO, "C button was pressed, starting count for centering car" );
+				}
 				g_release_centering_task++;
 			}
 			else if ( jesse_command->c == 1 && g_release_centering_task == C_BUTTON_PRESS_CENTER )
 			{
+				debug_print( DEBUG_IINFO, "C button has achieved centering car status" );
 				m1->setMyMotorSpeed( 0 );
 				m2->setMyMotorSpeed( 0 );
+				batteryModifier = (g_battery_mV > IDEAL_BATTERY_MV) ? 0 : (int16_t) ((double)((IDEAL_BATTERY_MV - g_battery_mV) / 100 ));
+				debug_print( DEBUG_IINFO, "centering using battery modifier of %d bat=%d", batteryModifier, g_battery_mV );
 				g_release_centering_task++;
 				memset( myCentering, 0x0, sizeof(SCenter) );
 			}
-			else if ( jesse_command->c == 0 && g_release_centering_task <= C_BUTTON_PRESS_CENTER )
+			else if ( jesse_command->c == 0 && g_release_centering_task != 0 && g_release_centering_task <= C_BUTTON_PRESS_CENTER )
 			{
+				debug_print( DEBUG_IINFO, "C button was unpressed" );
 				g_release_centering_task = 0;
 			}
 			
@@ -101,9 +123,12 @@ int main()
 			{
 				// always run the centering task when requested
 				// maybe we should count a 1s hold of the button to do this?
-				center_task( m2, myCentering );
+				center_task( m2, myCentering, batteryModifier );
 				if ( g_release_centering_task == 0 )
 				{
+					// clear the cButton also here so we don't just start the horn when done centering
+					cButton = 0;
+					
 					setPIDCenter( m2 );
 					m2->targetRef = m2->centerRef;
 					debug_print( DEBUG_ERROR, "FINAL: lftEnc=%d, rgtEnc=%d, cent=%d", m2->maxLeft, m2->maxRight, m2->centerRef );
@@ -118,6 +143,7 @@ int main()
 				}
 				else if ( cButton > 0 ) // enter here if cButton is > 0 and real cButton is not pressed anymore
 				{
+					debug_print( DEBUG_IINFO, "C button pressed to activate HORN, good luck, (%d)", cButton );
 					// cycle through horns here
 					if ( cButton % 3 == 0 )
 						horn_honk( HORN_VERSION_SHORT );
@@ -203,7 +229,7 @@ void release_pid_task()
 	updateVelocity();
 }
 
-void center_task( SPid *pid, SCenter *center )
+void center_task( SPid *pid, SCenter *center, int16_t batteryModifier )
 {
 	int32_t tmpCounts = 0;
 
@@ -217,11 +243,10 @@ void center_task( SPid *pid, SCenter *center )
 	else if ( center->findRight == 1 )
 	{
 		tmpCounts = getMotorEncoderCounts( pid->myMotorId );
-		debug_print( DEBUG_IINFO, "(%d)(%d) tq=%d (tmp,prv) (%ld,%ld) >= dif=%ld spd=%ld", center->findLeft, center->findRight, pid->currentTorque, tmpCounts, center->prvCount, (tmpCounts - center->prvCount), pid->currentVelocity );
 
 		if ( center->findRight == 1 && ( ( (tmpCounts - center->prvCount) > ((3 * PID_FREQUENCY_MULTIPLIER) + (1 * PID_FREQUENCY_MULTIPLIER)) ) || tmpCounts < (center->encCount + 500) ) )
 		{
-			pid->currentTorque = pid->setMyMotorSpeed( 27 );
+			pid->currentTorque = pid->setMyMotorSpeed( 27 + batteryModifier );
 			center->prvCount = tmpCounts;
 		}
 		else if ( pid->currentTorque != 0 )
@@ -230,6 +255,7 @@ void center_task( SPid *pid, SCenter *center )
 			center->findRight = 2;
 			pid->maxRight = (int16_t) getMotorEncoderCounts( pid->myMotorId );
 		}
+		debug_print( DEBUG_INFO, "(%d)(%d) tq=%d (tmp,prv) (%ld,%ld) >= dif=%ld spd=%ld mod=%d", center->findLeft, center->findRight, pid->currentTorque, tmpCounts, center->prvCount, (tmpCounts - center->prvCount), pid->currentVelocity, batteryModifier );
 	}
 	else if ( center->findRight >= 2  && center->findRight < 12)
 	{
@@ -245,11 +271,10 @@ void center_task( SPid *pid, SCenter *center )
 	else if ( center->findLeft == 1 )
 	{
 		tmpCounts = getMotorEncoderCounts( pid->myMotorId );
-		debug_print( DEBUG_IINFO, "(%d)(%d) tq=%d (tmp,prv) (%ld,%ld) >= dif=%ld spd=%ld", center->findLeft, center->findRight, pid->currentTorque, tmpCounts, center->prvCount, (tmpCounts - center->prvCount), pid->currentVelocity );
 
 		if ( center->findLeft == 1 && ( ( (tmpCounts - center->prvCount) < ((-3 * PID_FREQUENCY_MULTIPLIER) + (1 * PID_FREQUENCY_MULTIPLIER)) ) || tmpCounts > (center->encCount - 500) ) )
 		{
-			pid->currentTorque = pid->setMyMotorSpeed( -27 );
+			pid->currentTorque = pid->setMyMotorSpeed( -27 - batteryModifier );
 			center->prvCount = tmpCounts;
 		}
 		else if ( pid->currentTorque != 0 )
@@ -258,6 +283,7 @@ void center_task( SPid *pid, SCenter *center )
 			center->findLeft = 2;
 			pid->maxLeft = (int16_t) getMotorEncoderCounts( pid->myMotorId );
 		}
+		debug_print( DEBUG_INFO, "(%d)(%d) tq=%d (tmp,prv) (%ld,%ld) >= dif=%ld spd=%ld mod=%d", center->findLeft, center->findRight, pid->currentTorque, tmpCounts, center->prvCount, (tmpCounts - center->prvCount), pid->currentVelocity, batteryModifier );
 	}
 	else
 	{
@@ -268,16 +294,26 @@ void center_task( SPid *pid, SCenter *center )
 
 void print_lcd_task()
 {
+	g_release_lcd_task = true;
+}
+
+void print_lcd_task_worker()
+{
 	clear();
 
+	debug_print( DEBUG_VERBOSE, "entered the print_lcd_task" );
+
 	lcd_goto_xy(0, 0);
-	printf( "M1 = %ld", getM1EncoderCounts() );
+	g_battery_mV = read_battery_millivolts();
+	printf( "%d mV", g_battery_mV );
+	//printf( "M1 = %ld", getM1EncoderCounts() );
 	//SPid *m1 = NULL;
 	//getMotorPid( &m1, 1 );
 	//printf( "M1fp = %p", m1->setMyMotorSpeed );
 	
 
 	lcd_goto_xy(0, 1);
-	printf( "M2 = %ld", getM2EncoderCounts() );
+	printf( "%d mV", read_vcc_millivolts() );
+	//printf( "M2 = %ld", getM2EncoderCounts() );
 	//printf( "M1f  = %p", &setMyMotor1Speed );
 }
