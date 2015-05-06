@@ -10,6 +10,7 @@
 
 #include "../headers/timers.h"
 
+void (*g_timer_zero_interrupt_handler)();
 void (*g_timer_one_interrupt_handler)();
 void (*g_timer_two_interrupt_handlerA)();
 void (*g_timer_two_interrupt_handlerB)();
@@ -79,6 +80,29 @@ void timer_three_set_to_one_hundred_milliseconds(void (*timer_three_interrupt_ha
 	TIMSK3 = 0x02;
 
 	//sei();
+}
+
+void timer_zero_set_to_ten_milliseconds( void (*timer_zero_interrupt_handler)() )
+{
+	g_timer_zero_interrupt_handler = timer_zero_interrupt_handler;
+	
+	// COM0A = 0b10 Clear 0C0A on Compare Match (table 15-2)
+	// COM0B = 0b00 Normal port operation
+	// WGM   = 0b010 Set CTC mode (table 15-8)
+	// CS    = 0b101 Prescaler of 1024 (table 15-9)
+	TCCR0A = (1 << COM0A1) | (0 << COM0A0) | (1 << WGM01) | (0 << WGM00);
+	TCCR0B = (0 << WGM02) | (1 << CS02) | (0 << CS01) | (1 << CS00);
+	
+	// ~10ms timer top
+	OCR0A = 0xC2;
+	
+	TIMSK0 = (1 << OCIE0A);
+}
+
+ISR (TIMER0_COMPA_vect)
+{
+	if ( g_timer_zero_interrupt_handler != NULL )
+		(*g_timer_zero_interrupt_handler)();
 }
 
 ISR (TIMER1_COMPA_vect)

@@ -35,14 +35,18 @@ volatile uint16_t g_release_centering_task = false;
 
 int main()
 {
-	//uint16_t cButton = 0;
+	uint16_t cButton = 0;
 	
 	clear();
 	lcd_init_printf();
 	serial_init();
 	init_serial_rx();
 	
-	timer_one_set_to_ten_milliseconds( &release_pid_task );				// pid driver
+	// DO NOT initialize TIMER1
+	// TIMER1 is used for the horn and will override any setting you set
+	// Thus disableing the pid driver
+	// timer_one_set_to_ten_milliseconds( &release_pid_task );				// pid driver
+	timer_zero_set_to_ten_milliseconds( &release_pid_task );			// pid driver
 	timer_two_set_to_fast_pwm( NULL, NULL );							// motor driver
 	timer_three_set_to_one_hundred_milliseconds( &print_lcd_task );		// lcd driver
 	setupMotors();
@@ -108,21 +112,21 @@ int main()
 			else
 			{
 				// horn
-				//if ( jesse_command->c == 1 )
-				//{
-					//cButton++;
-				//}
-				//else if ( cButton > 0 ) // enter here if cButton is > 0 and real cButton is not pressed anymore
-				//{
-					//// cycle through horns here
-					//if ( cButton % 3 == 0 )
-						//horn_honk( HORN_VERSION_SHORT );
-					//else if ( cButton % 3 == 1 )
-						//horn_honk( HORN_VERSION_LONG );
-					//else if ( cButton % 3 == 2 )
-						//horn_honk( HORN_VERSION_FULL );
-					//cButton = 0;
-				//}
+				if ( jesse_command->c == 1 )
+				{
+					cButton++;
+				}
+				else if ( cButton > 0 ) // enter here if cButton is > 0 and real cButton is not pressed anymore
+				{
+					// cycle through horns here
+					if ( cButton % 3 == 0 )
+						horn_honk( HORN_VERSION_SHORT );
+					else if ( cButton % 3 == 1 )
+						horn_honk( HORN_VERSION_LONG );
+					else if ( cButton % 3 == 2 )
+						horn_honk( HORN_VERSION_FULL );
+					cButton = 0;
+				}
 				
 				// direction
 				if ( abs(jesse_command->x) > NUNCHUCK_ZERO_GOOD )
