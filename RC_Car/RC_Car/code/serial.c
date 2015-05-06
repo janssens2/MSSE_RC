@@ -89,7 +89,7 @@ void serial_receive_command( )
 	if ( myCnt == 4 )
 	{
 		g_serialCommand->x = x;
-		g_serialCommand->y = y;
+		g_serialCommand->y = y * -1; // invert the y coord as - is forward because of motor position and + should be forward
 		g_serialCommand->c = c;
 		g_serialCommand->z = z;
 	}
