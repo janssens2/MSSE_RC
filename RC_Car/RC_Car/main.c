@@ -81,6 +81,22 @@ int main()
 
 	while(true)
 	{
+		
+		/************************************************************************/
+		/* High level summary of logic in this cyclic executive                 */
+		/* check for serial stuff every time regardless of timers               */
+		/* 1. if lcd task timer fired release it                                */
+		/* 2. if pid task timer fired release it                                */
+		/*   a. handle if we should center the car based on input and timings   */
+		/*      i. when triggered to center, do nothing else                    */
+		/*   b. blow the horn based on inputs                                   */
+		/*   c. perform drive/steering operations                               */
+		/*      steering will not happen unless we have centered                */
+		/*                                                                      */
+		/* Note: Once we have determined to center we will not blow horn or     */
+		/*       drive/steer car until its done                                 */
+		/************************************************************************/
+		
 		serial_check();
 		check_for_new_bytes_received();
 		serial_receive_bytes();
@@ -107,8 +123,12 @@ int main()
 				debug_print( DEBUG_IINFO, "C button has achieved centering car status" );
 				m1->setMyMotorSpeed( 0 );
 				m2->setMyMotorSpeed( 0 );
+				
+				// attempt to generate a modifier to the default speed for centering.  If voltage drops too much
+				// we need more speed to get the wheels to turn, thus the modifier.
 				batteryModifier = (g_battery_mV > IDEAL_BATTERY_MV) ? 0 : (int16_t) ((double)((IDEAL_BATTERY_MV - g_battery_mV) / 100 ));
 				debug_print( DEBUG_IINFO, "centering using battery modifier of %d bat=%d", batteryModifier, g_battery_mV );
+				
 				g_release_centering_task++;
 				memset( myCentering, 0x0, sizeof(SCenter) );
 			}
