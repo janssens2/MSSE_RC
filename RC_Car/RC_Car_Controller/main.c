@@ -24,7 +24,6 @@ void release_print_task();
 volatile bool g_release_send_data_task = false;
 volatile bool g_release_print_task = false;
 
-int16_t count = 0;
 
 serialCommand *g_serialCommand;
 
@@ -74,7 +73,6 @@ void send_motion_control_data()
 	g_serialCommand->z = nunchuck_get_button_z();
 	serial_send_command(g_serialCommand);
 	/****************/
-	count++;
 }
 
 void print_motion_control_info()
@@ -84,8 +82,7 @@ void print_motion_control_info()
 	uint8_t input_method = motion_control_get_input_method();
 	if (input_method == MOTION_CONTROL_JOYSTICK)
 	{
-		//printf("[JS]  ACCEL");
-		printf("count=%+4d", count);
+		printf("[JS]  ACCEL");
 	}
 	else if (input_method == MOTION_CONTROL_ACCELEROMETER)
 	{
