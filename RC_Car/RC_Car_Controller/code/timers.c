@@ -6,8 +6,11 @@
  */
 
 #include <pololu/orangutan.h>
+#include <stdlib.h>
 
 void (*g_timer_one_interrupt_handler)();
+void (*g_timer_two_interrupt_handlerA)();
+void (*g_timer_two_interrupt_handlerB)();
 void (*g_timer_three_interrupt_handler)();
 
 void timer_one_set_to_ten_milliseconds(void (*timer_one_interrupt_handler)())
@@ -27,6 +30,25 @@ void timer_one_set_to_ten_milliseconds(void (*timer_one_interrupt_handler)())
 	sei();
 }
 
+void timer_two_set_to_ten_milliseconds(void (*timer_two_interrupt_handler)())
+{
+	g_timer_two_interrupt_handlerA = timer_two_interrupt_handler;
+
+	// COM2A = 0b10 Clear 0C2A on Compare Match (table 17-2)
+	// COM2B = 0b00 Normal port operation
+	// WGM   = 0b010 Set CTC mode (table 17-8)
+	// CS    = 0b101 Prescaler of 1024 (table 17-9)
+	TCCR2A = (1 << COM2A1) | (0 << COM2A0) | (1 << WGM21) | (0 << WGM20);
+	TCCR2B = (0 << WGM22) | (1 << CS22) | (0 << CS21) | (1 << CS20);
+
+	// ~10ms timer top
+	OCR2A = 0xC2;
+
+	TIMSK2 = (1 << OCIE2A);
+
+	sei();
+}
+
 void timer_three_set_to_one_hundred_milliseconds(void (*timer_three_interrupt_handler)())
 {
 	g_timer_three_interrupt_handler = timer_three_interrupt_handler;
@@ -42,9 +64,23 @@ void timer_three_set_to_one_hundred_milliseconds(void (*timer_three_interrupt_ha
 	sei();
 }
 
+
+
 ISR (TIMER1_COMPA_vect)
 {
 	(*g_timer_one_interrupt_handler)();
+}
+
+ISR (TIMER2_COMPA_vect)
+{
+	if ( g_timer_two_interrupt_handlerA != NULL )
+	(*g_timer_two_interrupt_handlerA)();
+}
+
+ISR (TIMER2_COMPB_vect)
+{
+	if ( g_timer_two_interrupt_handlerB != NULL )
+	(*g_timer_two_interrupt_handlerB)();
 }
 
 ISR (TIMER3_COMPA_vect)

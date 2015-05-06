@@ -9,6 +9,7 @@
 #define TIMERS_H_
 
 void timer_one_set_to_ten_milliseconds(void (*timer_one_interrupt_handler)());
+void timer_two_set_to_ten_milliseconds( void (*timer_two_interrupt_handler)() );
 void timer_three_set_to_one_hundred_milliseconds(void (*timer_three_interrupt_handler)());
 
 #endif /* TIMERS_H_ */
