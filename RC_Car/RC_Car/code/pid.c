@@ -36,7 +36,8 @@ void initPIDs( )
 {
 	gM1Pid = malloc( sizeof(SPid) );
 	gM2Pid = malloc( sizeof(SPid) );
-	setupPID( gM1Pid, MOTOR_MODE_SPEED, 1, 0.0001, 0.001, 0.01, 1000.0, -1000.0, &setMyMotor1Speed );
+	//setupPID( gM1Pid, MOTOR_MODE_SPEED, 1, 0.0001, 0.001, 0.001, 1000.0, -1000.0, &setMyMotor1Speed );
+	setupPID( gM1Pid, MOTOR_MODE_SPEED, 1, 0.0001, 0.002, 0.01, 10000.0, -10000.0, &setMyMotor1Speed );
 	debug_print(DEBUG_ERROR, "M1 fp=%p f=%p", gM1Pid->setMyMotorSpeed, &setMyMotor1Speed );
 	setupPID( gM2Pid, MOTOR_MODE_POSITION, 2, 0.0001, 0.125, 0.1, 1000.0, -1000.0, &setMyMotor2Speed );
 	debug_print(DEBUG_ERROR, "M2 fp=%p f=%p", gM2Pid->setMyMotorSpeed, &setMyMotor2Speed );

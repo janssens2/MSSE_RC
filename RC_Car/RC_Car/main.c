@@ -20,8 +20,9 @@
 #include "headers/serial.h"
 #include "headers/horn.h"
 
+#define PID_FREQUENCY_MULTIPLIER 2 // multiplier of timer firings to release the PID task
 #define NUNCHUCK_ZERO_GOOD 4
-#define C_BUTTON_PRESS_CENTER 1000 // set to 50 which is 50 * 10ms or 500ms wait to take action
+#define C_BUTTON_PRESS_CENTER 500 // set to 50 which is 50 * 10ms or 500ms wait to take action, take into account PID_FREQUENCY_MULTIPLIER too
 
 void release_pid_task();
 void print_lcd_task();
@@ -29,6 +30,7 @@ void pid_worker( SPid *myPid );
 void center_task( SPid *pid, SCenter *center );
 
 volatile bool g_release_pid_task = false;
+volatile uint32_t g_release_pid_task_counter = 0;
 volatile uint16_t g_release_centering_task = false;
 
 int main()
@@ -40,9 +42,9 @@ int main()
 	serial_init();
 	init_serial_rx();
 	
-	timer_one_set_to_ten_milliseconds( &release_pid_task );
-	timer_two_set_to_fast_pwm( NULL, NULL );
-	timer_three_set_to_one_hundred_milliseconds( &print_lcd_task );
+	timer_one_set_to_ten_milliseconds( &release_pid_task );				// pid driver
+	timer_two_set_to_fast_pwm( NULL, NULL );							// motor driver
+	timer_three_set_to_one_hundred_milliseconds( &print_lcd_task );		// lcd driver
 	setupMotors();
 	
 	initPIDs();
@@ -141,7 +143,7 @@ int main()
 				{
 					m1->targetRef = 0;
 				}
-				debug_print( DEBUG_IINFO, "command received: x: %d(%d), y:%d(%d)", jesse_command->x, m2->targetRef, jesse_command->y, m1->targetRef );
+				debug_print( DEBUG_VERBOSE, "command received: x: %d(%d), y:%d(%d)", jesse_command->x, m2->targetRef, jesse_command->y, m1->targetRef );
 				pid_worker( m1 );
 				pid_worker( m2 );
 			}
@@ -189,7 +191,11 @@ void pid_worker( SPid *myPid )
 
 void release_pid_task()
 {
-	g_release_pid_task = true;
+	g_release_pid_task_counter++;
+	if ( g_release_pid_task_counter % PID_FREQUENCY_MULTIPLIER == 0 )
+	{
+		g_release_pid_task = true;
+	}
 	updateVelocity();
 }
 
@@ -207,11 +213,11 @@ void center_task( SPid *pid, SCenter *center )
 	else if ( center->findRight == 1 )
 	{
 		tmpCounts = getMotorEncoderCounts( pid->myMotorId );
-		debug_print( DEBUG_INFO, "(%d)(%d) tq=%d (tmp,prv) (%ld,%ld) >= dif=%ld spd=%ld", center->findLeft, center->findRight, pid->currentTorque, tmpCounts, center->prvCount, (tmpCounts - center->prvCount), pid->currentVelocity );
+		debug_print( DEBUG_IINFO, "(%d)(%d) tq=%d (tmp,prv) (%ld,%ld) >= dif=%ld spd=%ld", center->findLeft, center->findRight, pid->currentTorque, tmpCounts, center->prvCount, (tmpCounts - center->prvCount), pid->currentVelocity );
 
-		if ( center->findRight == 1 && ( ( (tmpCounts - center->prvCount) > 3 ) || tmpCounts < (center->encCount + 500) ) )
+		if ( center->findRight == 1 && ( ( (tmpCounts - center->prvCount) > ((3 * PID_FREQUENCY_MULTIPLIER) + (1 * PID_FREQUENCY_MULTIPLIER)) ) || tmpCounts < (center->encCount + 500) ) )
 		{
-			pid->currentTorque = pid->setMyMotorSpeed( 25 );
+			pid->currentTorque = pid->setMyMotorSpeed( 27 );
 			center->prvCount = tmpCounts;
 		}
 		else if ( pid->currentTorque != 0 )
@@ -235,11 +241,11 @@ void center_task( SPid *pid, SCenter *center )
 	else if ( center->findLeft == 1 )
 	{
 		tmpCounts = getMotorEncoderCounts( pid->myMotorId );
-		debug_print( DEBUG_INFO, "(%d)(%d) tq=%d (tmp,prv) (%ld,%ld) >= dif=%ld spd=%ld", center->findLeft, center->findRight, pid->currentTorque, tmpCounts, center->prvCount, (tmpCounts - center->prvCount), pid->currentVelocity );
+		debug_print( DEBUG_IINFO, "(%d)(%d) tq=%d (tmp,prv) (%ld,%ld) >= dif=%ld spd=%ld", center->findLeft, center->findRight, pid->currentTorque, tmpCounts, center->prvCount, (tmpCounts - center->prvCount), pid->currentVelocity );
 
-		if ( center->findLeft == 1 && ( ( (tmpCounts - center->prvCount) < -3 ) || tmpCounts > (center->encCount - 500) ) )
+		if ( center->findLeft == 1 && ( ( (tmpCounts - center->prvCount) < ((-3 * PID_FREQUENCY_MULTIPLIER) + (1 * PID_FREQUENCY_MULTIPLIER)) ) || tmpCounts > (center->encCount - 500) ) )
 		{
-			pid->currentTorque = pid->setMyMotorSpeed( -25 );
+			pid->currentTorque = pid->setMyMotorSpeed( -27 );
 			center->prvCount = tmpCounts;
 		}
 		else if ( pid->currentTorque != 0 )

@@ -94,5 +94,5 @@ void serial_receive_command( )
 		g_serialCommand->z = z;
 	}
 	
-	debug_print( DEBUG_IINFO, "(%d) serial received: (%X) x:%d y:%d c:%d z:%d", myCnt, &g_serialCommand, g_serialCommand->x, g_serialCommand->y, g_serialCommand->c, g_serialCommand->z );
+	debug_print( DEBUG_VERBOSE, "(%d) serial received: (%X) x:%d y:%d c:%d z:%d", myCnt, &g_serialCommand, g_serialCommand->x, g_serialCommand->y, g_serialCommand->c, g_serialCommand->z );
 }
