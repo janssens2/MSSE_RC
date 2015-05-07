@@ -264,6 +264,8 @@ void center_task( SPid *pid, SCenter *center, int16_t batteryModifier )
 	{
 		tmpCounts = getMotorEncoderCounts( pid->myMotorId );
 
+		debug_print( DEBUG_INFO, "(%d)(%d) tq=%d (tmp,prv) (%ld,%ld) >= dif=%ld spd=%ld mod=%d", center->findLeft, center->findRight, pid->currentTorque, tmpCounts, center->prvCount, (tmpCounts - center->prvCount), pid->currentVelocity, batteryModifier );
+
 		if ( center->findRight == 1 && ( ( (tmpCounts - center->prvCount) > ((3 * PID_FREQUENCY_MULTIPLIER) + (1 * PID_FREQUENCY_MULTIPLIER)) ) || tmpCounts < (center->encCount + 500) ) )
 		{
 			pid->currentTorque = pid->setMyMotorSpeed( 27 + batteryModifier );
@@ -275,7 +277,6 @@ void center_task( SPid *pid, SCenter *center, int16_t batteryModifier )
 			center->findRight = 2;
 			pid->maxRight = (int16_t) getMotorEncoderCounts( pid->myMotorId );
 		}
-		debug_print( DEBUG_INFO, "(%d)(%d) tq=%d (tmp,prv) (%ld,%ld) >= dif=%ld spd=%ld mod=%d", center->findLeft, center->findRight, pid->currentTorque, tmpCounts, center->prvCount, (tmpCounts - center->prvCount), pid->currentVelocity, batteryModifier );
 	}
 	else if ( center->findRight >= 2  && center->findRight < 12)
 	{
@@ -292,7 +293,9 @@ void center_task( SPid *pid, SCenter *center, int16_t batteryModifier )
 	{
 		tmpCounts = getMotorEncoderCounts( pid->myMotorId );
 
-		if ( center->findLeft == 1 && ( ( (tmpCounts - center->prvCount) < ((-3 * PID_FREQUENCY_MULTIPLIER) + (1 * PID_FREQUENCY_MULTIPLIER)) ) || tmpCounts > (center->encCount - 500) ) )
+		debug_print( DEBUG_INFO, "(%d)(%d) tq=%d (tmp,prv) (%ld,%ld) >= dif=%ld spd=%ld mod=%d", center->findLeft, center->findRight, pid->currentTorque, tmpCounts, center->prvCount, (tmpCounts - center->prvCount), pid->currentVelocity, batteryModifier );
+
+		if ( center->findLeft == 1 && ( ( (tmpCounts - center->prvCount) < ((-3 * PID_FREQUENCY_MULTIPLIER) - (1 * PID_FREQUENCY_MULTIPLIER)) ) || tmpCounts > (center->encCount - 500) ) )
 		{
 			pid->currentTorque = pid->setMyMotorSpeed( -27 - batteryModifier );
 			center->prvCount = tmpCounts;
@@ -303,7 +306,6 @@ void center_task( SPid *pid, SCenter *center, int16_t batteryModifier )
 			center->findLeft = 2;
 			pid->maxLeft = (int16_t) getMotorEncoderCounts( pid->myMotorId );
 		}
-		debug_print( DEBUG_INFO, "(%d)(%d) tq=%d (tmp,prv) (%ld,%ld) >= dif=%ld spd=%ld mod=%d", center->findLeft, center->findRight, pid->currentTorque, tmpCounts, center->prvCount, (tmpCounts - center->prvCount), pid->currentVelocity, batteryModifier );
 	}
 	else
 	{
