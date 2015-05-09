@@ -12,7 +12,6 @@
 #include <pololu/orangutan.h>
 
 #include "headers/motion_control.h"
-#include "headers/nintendo_nunchuk.h"
 #include "headers/timers.h"
 #include "headers/serial.h"
 
@@ -24,6 +23,10 @@ void release_print_task();
 volatile bool g_release_send_data_task = false;
 volatile bool g_release_print_task = false;
 
+#ifdef DEBUG
+extern serialMessage *g_serialMessage;
+extern char tmpBuff[30];
+#endif
 
 serialCommand *g_serialCommand;
 
@@ -32,6 +35,9 @@ int main()
 	clear();
 	lcd_init_printf();
 	
+	motion_control_initialize();
+	delay_ms(20);
+	motion_control_home_inputs();
 	
 	init_serial_tx(&g_serialCommand);
 	
@@ -50,6 +56,7 @@ int main()
 		{
 			g_release_print_task = false;
 			print_motion_control_info();
+			//print_debug_info1();
 		}
 	}
 }
@@ -67,10 +74,10 @@ void release_print_task()
 void send_motion_control_data()
 {
 	/****************/
-	g_serialCommand->x = motion_control_get_x_input();
-	g_serialCommand->y = motion_control_get_y_input();
-	g_serialCommand->c = nunchuck_get_button_c();
-	g_serialCommand->z = nunchuck_get_button_z();
+	g_serialCommand->x = motion_control_get_x_input_as_percentage();
+	g_serialCommand->y = motion_control_get_y_input_as_percentage();
+	g_serialCommand->c = motion_control_get_c_button_input();
+	g_serialCommand->z = motion_control_get_z_button_input();
 	serial_send_command(g_serialCommand);
 	/****************/
 }
@@ -82,11 +89,11 @@ void print_motion_control_info()
 	uint8_t input_method = motion_control_get_input_method();
 	if (input_method == MOTION_CONTROL_JOYSTICK)
 	{
-		printf("[JS]  ACCEL");
+		printf("[JS]  ACCEL C%dZ%d", motion_control_get_c_button_input(), motion_control_get_z_button_input());
 	}
 	else if (input_method == MOTION_CONTROL_ACCELEROMETER)
 	{
-		printf(" JS  [ACCEL]");
+		printf(" JS  [ACCEL]C%dZ%d", motion_control_get_c_button_input(), motion_control_get_z_button_input());
 	}
 
 	lcd_goto_xy(0, 1);
@@ -98,3 +105,16 @@ void print_motion_control_info()
 	
 
 }
+
+#ifdef DEBUG
+void print_debug_info1()
+{
+	clear();
+	lcd_goto_xy(0,0);
+	//printf( "%s", (char *)g_serialMessage);
+	printf( "%s", tmpBuff );
+	//printf( "%+4d%+4d %1d%1d", g_serialCommand->x, g_serialCommand->y, g_serialCommand->c, g_serialCommand->z);
+	//lcd_goto_xy(0,1);
+	//printf( "%d", sizeof(serialMessage));
+}
+#endif

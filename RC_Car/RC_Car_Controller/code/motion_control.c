@@ -8,7 +8,6 @@
 #define MAX_JOYSTICK_VALUE 0xFF
 #define MAX_ACCELEROMETER_VALUE 0x3FF
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "../headers/motion_control.h"
@@ -29,12 +28,15 @@ void motion_control_refresh_data();
 
 void motion_control_initialize()
 {
-	g_is_motion_control_initialized = true;
-
-	motion_control_refresh_data();
-	motion_control_home_inputs();
-
-	timer_one_set_to_ten_milliseconds(&motion_control_refresh_data);
+	if ( !g_is_motion_control_initialized )
+	{	
+		g_is_motion_control_initialized = true;
+		
+		motion_control_refresh_data();
+		motion_control_home_inputs();
+		
+		timer_one_set_to_ten_milliseconds(&motion_control_refresh_data);
+	}
 }
 
 void motion_control_home_inputs()
@@ -64,11 +66,11 @@ void motion_control_refresh_data()
 	nunchuck_refresh_data();
 
 	bool c_button_value = nunchuck_get_button_c();
-	if (c_button_value && !g_last_c_button_value)
-	{
-		// Change the input method from joystick to accelerometer, or vice versa
-		g_motion_control_input_method = g_motion_control_input_method ^ 0x01;
-	}
+	//if (c_button_value && !g_last_c_button_value)
+	//{
+		//// Change the input method from joystick to accelerometer, or vice versa
+		//g_motion_control_input_method = g_motion_control_input_method ^ 0x01;
+	//}
 	g_last_c_button_value = c_button_value;
 
 	bool z_button_value = nunchuck_get_button_z();
@@ -173,4 +175,18 @@ int8_t motion_control_get_y_input_as_percentage()
 	}
 
 	return y;
+}
+
+bool motion_control_get_c_button_input()
+{
+	motion_control_verify_is_initialized();
+	
+	return nunchuck_get_button_c();
+}
+
+bool motion_control_get_z_button_input()
+{
+	motion_control_verify_is_initialized();
+	
+	return nunchuck_get_button_z();
 }

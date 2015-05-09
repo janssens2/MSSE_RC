@@ -22,7 +22,7 @@
 
 #define PID_FREQUENCY_MULTIPLIER 2 // multiplier of timer firings to release the PID task
 #define NUNCHUCK_ZERO_GOOD 4
-#define C_BUTTON_PRESS_CENTER 500 // set to 50 which is 50 * 10ms or 500ms wait to take action, take into account PID_FREQUENCY_MULTIPLIER too
+#define C_BUTTON_PRESS_CENTER 150 // set to 50 which is 50 * 10ms or 500ms wait to take action, take into account PID_FREQUENCY_MULTIPLIER too
 #define IDEAL_BATTERY_MV 9000
 
 void release_pid_task();
@@ -193,7 +193,7 @@ int main()
 				{
 					m1->targetRef = 0;
 				}
-				debug_print( DEBUG_VERBOSE, "command received: x: %d(%d), y:%d(%d)", jesse_command->x, m2->targetRef, jesse_command->y, m1->targetRef );
+				debug_print( DEBUG_IINFO, "command received: x: %d(%d), y:%d(%d)", jesse_command->x, m2->targetRef, jesse_command->y, m1->targetRef );
 				pid_worker( m1 );
 				pid_worker( m2 );
 			}

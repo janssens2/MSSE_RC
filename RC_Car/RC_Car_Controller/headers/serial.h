@@ -24,8 +24,10 @@ typedef struct {
 	char delim_2;
 	char c_val[1];
 	char delim_3;
-	char z_val[1];
 	char delim_4;
+	char z_val[1];
+	char delim_5;
+	char delim_6;
 	char end_char;
 	char newline;
 	char linefeed;
